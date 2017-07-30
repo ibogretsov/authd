@@ -26,7 +26,7 @@ Database access should be implmeneted using [sqlalchemy](https://www.sqlalchemy.
 
 ## Tests
 
-Tests should be implemented in [pytest](https://docs.pytest.org/en/latest/)
+Tests should be implemented in [pytest](https://docs.pytest.org/en/latest/).
 
 ## API
 

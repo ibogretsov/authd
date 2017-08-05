@@ -1,9 +1,7 @@
-from sqlalchemy import *
+import sqlalchemy as sa
+import psycopg2
 from sqlalchemy.ext.declarative import declarative_base
-
-
-# engine = create_engine(
-# "postgresql://postgres@localhost:5432/database")
+from sqlalchemy.dialects.postgresql import UUID
 
 
 Base = declarative_base()
@@ -11,14 +9,17 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-    user_id = Column("user_id", Integer, primary_key=True)
-    login = Column("login", VARCHAR(16))
-    password = Column("password", VARCHAR(24))
-    created = Column("created", DateTime)
+    user_id = sa.Column("user_id", UUID, primary_key=True)
+    login = sa.Column("login", sa.VARCHAR(16))
+    password = sa.Column("password", sa.VARCHAR(24))
+    created = sa.Column("created", sa.DateTime)
+    active = sa.Column("active", sa.Boolean)
 
 
 class Confirm(Base):
     __tablename__ = "confirmation"
-    conf_id = Column("conf_id", Integer, primary_key=True)
-    user_id = Column("user_id", Integer, ForeignKey("users.user_id"))
-    conf = Column("conf", Boolean)
+    conf_id = sa.Column("conf_id", UUID, primary_key=True)
+    user_id = sa.Column("user_id", UUID, sa.ForeignKey("users.user_id"))
+    conf = sa.Column("conf", sa.Boolean)
+    created = sa.Column("created", sa.DateTime)
+    expires = sa.Column("expires", sa.DateTime)

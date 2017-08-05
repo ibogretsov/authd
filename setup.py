@@ -5,21 +5,22 @@ import os
 
 import sqlalchemy
 import sqlalchemy_utils
+import psycopg2
 
 
 def crt_engine(user, password):
     """create engine"""
     if user is not None and password is not None:
         engine = sqlalchemy.create_engine(
-            "postgresql://{0}:{1}@localhost:5432/database".
+            "postgresql+psycopg2://{0}:{1}@localhost:5432/database".
             format(user, password))
     elif user is not None:
         engine = sqlalchemy.create_engine(
-            "postgresql://{0}@localhost:5432/database".
+            "postgresql+psycopg2://{0}@localhost:5432/database".
             format(user))
     else:
         engine = sqlalchemy.create_engine(
-            "postgresql://localhost:5432/database")
+            "postgresql+psycopg2://localhost:5432/database")
     return engine
 
 
@@ -58,7 +59,7 @@ class DropDatabase(DatabaseCommand):
             sqlalchemy_utils.functions.drop_database(engine.url)
 
 
-class DBSync(distutils.cmd.Command):
+class DBSyncCommand(distutils.cmd.Command):
     """A custom command to run alembic"""
 
     description = "run alembic"
@@ -78,7 +79,7 @@ class DBSync(distutils.cmd.Command):
 setuptools.setup(
     cmdclass={"createdb": CreateDatabase,
               "dropdb": DropDatabase,
-              "dbsync": DBSync},
+              "syncdb": DBSyncCommand},
     name="authd",
     packages=["authd"],
     version="0.1.0",

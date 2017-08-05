@@ -5,7 +5,6 @@ import os
 
 import sqlalchemy
 import sqlalchemy_utils
-import psycopg2
 
 
 def crt_engine(user, password):
@@ -87,4 +86,6 @@ setuptools.setup(
     author_email="ilyabogrecov@gmail.com",
     url="https://gitlab.com/ilyabogrecov/authd",
     keywords=["authentication", "users"],
+    install_requires=["sqlalchemy", "psycopg2",
+                      "sqlalchemy_utils", "flask", "alembic"]
 )

@@ -9,8 +9,8 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     user_id = sa.Column("user_id", pg.UUID, primary_key=True)
-    login = sa.Column("login", sa.VARCHAR(16))
-    password = sa.Column("password", sa.VARCHAR(24))
+    email = sa.Column("email", sa.VARCHAR(128))
+    password = sa.Column("password", sa.VARCHAR(128))
     created = sa.Column("created", sa.DateTime)
     active = sa.Column("active", sa.Boolean)
 

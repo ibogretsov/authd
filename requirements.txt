@@ -3,3 +3,7 @@ psycopg2
 sqlalchemy_utils
 flask
 alembic
+voluptuous
+flask_sqlalchemy
+bcrypt
+pytest-flask

@@ -4,6 +4,6 @@ from server import create_app
 
 
 @pytest.fixture
-def app(conf):
-    app = create_app(conf)
+def app():
+    app = create_app("authd/authdb.json")
     return app

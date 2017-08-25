@@ -9,6 +9,7 @@ from authd import dataaccess
 from authd import models
 
 root = flask.Blueprint("root", __name__, url_prefix="")
+
 USER_SCHEMA = schema.Schema({
     schema.Required("email"):
     schema.Email(),

@@ -30,7 +30,40 @@ def test_create_user_if_password_is_short(client):
     assert resp.status_code == 400
 
 
-def test_user_create_exists(client):
+def test_create_user_if_absent_email(client):
+    resp = client.post(
+        "/users",
+        data=json.dumps({
+            "email": "",
+            "password": "123456"
+        }),
+        content_type="aplication/json")
+    assert resp.status_code == 400
+
+
+def test_create_user_if_absent_password(client):
+    resp = client.post(
+        "/users",
+        data=json.dumps({
+            "email": "test@mail.com",
+            "password": ""
+        }),
+        content_type="aplication/json")
+    assert resp.status_code == 400
+
+
+def test_create_user_if_absent_email_password(client):
+    resp = client.post(
+        "/users",
+        data=json.dumps({
+            "email": "",
+            "password": ""
+        }),
+        content_type="aplication/json")
+    assert resp.status_code == 400
+
+
+def test_create_user_exists(client):
     resp = client.post(
         "/users",
         data=json.dumps({
@@ -48,7 +81,7 @@ def test_user_create_exists(client):
     assert resp.status_code == 400
 
 
-def test_user_create_ok(client):
+def test_create_ok(client):
     resp = client.post(
         "/users",
         data=json.dumps({
@@ -57,4 +90,3 @@ def test_user_create_ok(client):
         }),
         content_type="aplication/json")
     assert resp.status_code == 201
-    

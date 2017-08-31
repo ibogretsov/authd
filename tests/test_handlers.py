@@ -30,36 +30,29 @@ def test_create_user_if_password_is_short(client):
     assert resp.status_code == 400
 
 
-def test_create_user_if_absent_email(client):
+def test_create_user_if_missing_email(client):
     resp = client.post(
         "/users",
         data=json.dumps({
-            "email": "",
             "password": "123456"
         }),
         content_type="aplication/json")
     assert resp.status_code == 400
 
 
-def test_create_user_if_absent_password(client):
+def test_create_user_if_missing_password(client):
     resp = client.post(
         "/users",
         data=json.dumps({
             "email": "test@mail.com",
-            "password": ""
         }),
         content_type="aplication/json")
     assert resp.status_code == 400
 
 
-def test_create_user_if_absent_email_password(client):
+def test_create_user_if_missing_email_password(client):
     resp = client.post(
-        "/users",
-        data=json.dumps({
-            "email": "",
-            "password": ""
-        }),
-        content_type="aplication/json")
+        "/users", data=json.dumps({}), content_type="aplication/json")
     assert resp.status_code == 400
 
 
@@ -67,21 +60,21 @@ def test_create_user_exists(client):
     resp = client.post(
         "/users",
         data=json.dumps({
-            "email": "test10@mail.com",
+            "email": "test_exists@mail.com",
             "password": "123456"
         }),
         content_type="aplication/json")
     resp = client.post(
         "/users",
         data=json.dumps({
-            "email": "test10@mail.com",
+            "email": "test_exists@mail.com",
             "password": "123456"
         }),
         content_type="aplication/json")
     assert resp.status_code == 400
 
 
-def test_create_ok(client):
+def test_create_user_success(client):
     resp = client.post(
         "/users",
         data=json.dumps({
@@ -90,3 +83,25 @@ def test_create_ok(client):
         }),
         content_type="aplication/json")
     assert resp.status_code == 201
+
+
+def test_confirm_user_if_confirmation_not_exists(client):
+    resp = client.get(
+        "/actions/invalid_conf_id")
+    assert resp.status_code == 404
+
+
+def test_confirm_user_success(client):
+    resp = client.post(
+        "/users",
+        data=json.dumps({
+            "email": "test_confirm@mail.com",
+            "password": "123456"
+        }),
+        content_type="aplication/json")
+    # assert resp.status_code == 201
+    conf_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.get(
+        "/actions/{0}".format(conf_id))
+    assert resp.status_code == 200
+    assert json.loads(resp.data)["user"]["active"]

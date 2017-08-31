@@ -59,7 +59,7 @@ def create_user():
     }), 201
 
 
-@root.route("/actions/<conf_id>", methods=["GET"])
+@root.route("/actions/<uuid:conf_id>", methods=["GET"])
 def confirm_user(conf_id):
     # read confirmation-id from request
     # find confirmation id database by id
@@ -71,7 +71,7 @@ def confirm_user(conf_id):
     # return HTTP 200
     with dataaccess.connect_db(flask.current_app.config["DSN"]) as session:
         existing = session.query(models.Confirm).filter(
-            models.Confirm.conf_id == conf_id).first()
+            models.Confirm.conf_id == str(conf_id)).first()
         if existing is None:
             flask.abort(
                 flask.make_response(
@@ -81,17 +81,17 @@ def confirm_user(conf_id):
                 flask.make_response(
                     flask.jsonify(message="confirmation expired"), 400))
         user_id = existing.user_id
-        active = session.query(models.User).filter(
-            models.User.user_id == user_id).update(
+        session.query(models.User).filter(
+            models.User.user_id == str(user_id)).update(
                 {
                     models.User.active: True
                 }, synchronize_session=False)
         session.query(models.Confirm).filter(
-            models.Confirm.conf_id == conf_id).delete()
+            models.Confirm.conf_id == str(conf_id)).delete()
         session.commit()
     return flask.jsonify({
         "user": {
             "id": user_id,
-            "active": bool(active)
+            "active": True
         }
     }), 200

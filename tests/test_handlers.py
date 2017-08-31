@@ -117,9 +117,8 @@ def test_confirm_user_expired(client, faketime):
             "password": "123456"
         }),
         content_type="aplication/json")
-    utc_now = faketime.current_utc
-    faketime.current_utc = datetime.datetime(2018, 1, 1, 16, 0, 0)
     assert resp.status_code == 201
+    faketime.current_utc = datetime.datetime(2018, 1, 1, 16, 1, 11)
     conf_id = json.loads(resp.data)["confirmation"]["id"]
     resp = client.get(
         "/actions/{0}".format(conf_id))

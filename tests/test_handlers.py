@@ -1,7 +1,9 @@
 import json
+import datetime
+
 
 import flask
-# import pytest
+import pytest
 from authd import dataaccess, models
 
 email = "test4@mail.com"
@@ -78,7 +80,7 @@ def test_create_user_success(client):
     resp = client.post(
         "/users",
         data=json.dumps({
-            "email": "test_ok@mail.com",
+            "email": "test_success@mail.com",
             "password": "123456"
         }),
         content_type="aplication/json")
@@ -99,9 +101,26 @@ def test_confirm_user_success(client):
             "password": "123456"
         }),
         content_type="aplication/json")
-    # assert resp.status_code == 201
+    assert resp.status_code == 201
     conf_id = json.loads(resp.data)["confirmation"]["id"]
     resp = client.get(
         "/actions/{0}".format(conf_id))
     assert resp.status_code == 200
     assert json.loads(resp.data)["user"]["active"]
+
+
+def test_confirm_user_expired(client, faketime):
+    resp = client.post(
+        "/users",
+        data=json.dumps({
+            "email": "test_expired@mail.com",
+            "password": "123456"
+        }),
+        content_type="aplication/json")
+    utc_now = faketime.current_utc
+    faketime.current_utc = datetime.datetime(2018, 1, 1, 16, 0, 0)
+    assert resp.status_code == 201
+    conf_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.get(
+        "/actions/{0}".format(conf_id))
+    assert resp.status_code == 400

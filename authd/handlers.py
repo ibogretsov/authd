@@ -37,15 +37,6 @@ def return_token(token):
     return flask.jsonify(manager.parse_token(token))
 
 
-def time_create():
-    with open("etc/authdb.json", mode="r", encoding="utf-8") as cfg:
-        exp = json.load(cfg)["security"]["ttl"]
-        seconds = pytimeparse.parse(exp)
-        now = datetime.datetime.utcnow()
-        expires = now + datetime.timedelta(seconds=seconds)
-    return now, expires
-
-
 @root.route("/users", methods=["POST"])
 def create_user():
     data = json.loads(flask.request.data)
@@ -58,7 +49,8 @@ def create_user():
             models.User.email == data["email"]).first()
         if existing is not None:
             abort("This user already exists", 400)
-        now, expires = time_create()
+        now = datetime.datetime.utcnow()
+        expires = now + flask.current_app.config["security"]["ttl"]
         user = models.User(
             email=data["email"], password=hash_password, created=now)
         session.add(user)
@@ -91,7 +83,8 @@ def confirm_user(conf_id):
     # set user.active = True
     # delete confirmation
     # return HTTP 200
-    with dataaccess.connect_db(flask.current_app.config["DSN"]) as session:
+    with dataaccess.connect_db(
+            flask.current_app.config["database"]["DSN"]) as session:
         existing = session.query(models.Confirm).filter(
             models.Confirm.conf_id == str(conf_id)).first()
         if existing is None:
@@ -102,7 +95,8 @@ def confirm_user(conf_id):
             # return new conf_id
             session.query(models.Confirm).filter(
                 models.Confirm.conf_id == str(conf_id)).delete()
-            now, expires = time_create()
+            now = datetime.datetime.utcnow()
+            expires = now + flask.current_app.config["security"]["ttl"]
             conf = models.Confirm(
                 user_id=existing.user_id, created=now, expires=expires)
             session.add(conf)
@@ -127,7 +121,8 @@ def confirm_user(conf_id):
                 "id": user_id,
                 "active": True
             }
-        }, secret="tokentoken")
+        },
+        secret=flask.current_app.config["security"]["key"])
     return return_token(token), 200
 
 
@@ -135,7 +130,8 @@ def confirm_user(conf_id):
 def login():
     data = json.loads(flask.request.data)
     email_password_correct(data)
-    with dataaccess.connect_db(flask.current_app.config["DSN"]) as session:
+    with dataaccess.connect_db(
+            flask.current_app.config["database"]["DSN"]) as session:
         user = session.query(models.User.email, models.User.password,
                              models.User.active).filter(
                                  models.User.email == data["email"]).first()
@@ -153,5 +149,5 @@ def login():
                 "password": user.password
             },
             # read secret from config
-            secret="tokentoken")
+            secret=flask.current_app.config["security"]["key"])
         return return_token(token), 200

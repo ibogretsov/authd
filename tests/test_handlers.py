@@ -3,6 +3,8 @@ import datetime
 
 import pytest
 
+from authd import models
+
 
 @pytest.fixture
 def config():

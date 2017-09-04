@@ -1,3 +1,11 @@
 {
-    "DSN": "postgresql+psycopg2://postgres@localhost:5432/authdb"
+    "database":
+    {
+        "DSN": "postgresql+psycopg2://postgres@localhost:5432/authdb"
+    },
+    "security":
+    {
+        "ttl": "00:00:20",
+        "key": "tokentoken"
+    }
 }

@@ -14,5 +14,5 @@ def create_app(config_filename):
 
 
 if __name__ == "__main__":
-    app = create_app("authd/authdb.json")
+    app = create_app("etc/authdb.json")
     app.run()

@@ -7,3 +7,5 @@ voluptuous
 flask_sqlalchemy
 bcrypt
 pytest-flask
+tokenlib
+pytimeparse

@@ -7,7 +7,7 @@ from server import create_app
 
 @pytest.fixture
 def app():
-    app = create_app("authd/authdb.json")
+    app = create_app("etc/authdb.json")
     return app
 
 

@@ -8,21 +8,30 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-    user_id = sa.Column("user_id", pg.UUID,
-                        server_default=sa.text("gen_random_uuid()"),
-                        primary_key=True)
-    email = sa.Column("email", sa.VARCHAR(128), index=True, unique=True)
-    password = sa.Column("password", sa.VARCHAR(128))
-    created = sa.Column("created", sa.DateTime)
-    active = sa.Column("active", sa.Boolean, default=False)
+    user_id = sa.Column(
+        "user_id",
+        pg.UUID,
+        server_default=sa.text("gen_random_uuid()"),
+        primary_key=True)
+    email = sa.Column(
+        "email", sa.VARCHAR(128), index=True, unique=True, nullable=False)
+    password = sa.Column("password", sa.VARCHAR(128), nullable=False)
+    created = sa.Column("created", sa.DateTime, nullable=False)
+    active = sa.Column("active", sa.Boolean, nullable=False, default=False)
 
 
 class Confirm(Base):
     __tablename__ = "confirmation"
-    conf_id = sa.Column("conf_id", pg.UUID,
-                        server_default=sa.text("gen_random_uuid()"),
-                        primary_key=True)
-    user_id = sa.Column("user_id", pg.UUID, sa.ForeignKey("users.user_id"))
-    created = sa.Column("created", sa.DateTime)
-    expires = sa.Column("expires", sa.DateTime)
+    conf_id = sa.Column(
+        "conf_id",
+        pg.UUID,
+        server_default=sa.text("gen_random_uuid()"),
+        primary_key=True)
+    user_id = sa.Column(
+        "user_id",
+        pg.UUID,
+        sa.ForeignKey("users.user_id", ondelete='CASCADE'),
+        nullable=False)
+    created = sa.Column("created", sa.DateTime, nullable=False)
+    expires = sa.Column("expires", sa.DateTime, nullable=False)
     user = relationship("User")

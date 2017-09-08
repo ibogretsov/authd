@@ -4,41 +4,32 @@ import datetime
 import pytest
 
 from authd import models
+from authd import config, dataaccess
 
 
 @pytest.fixture
-def config():
+def cfg():
     # read config from etc/authd.json like in server::create_app
     # return cfg
-    pass
+    return config.load("etc/authdb.json")
 
 
 @pytest.fixture
-def session(request, config):
-    # return dataaccess.connect_db()
-    pass
+def session(request, cfg):
+    return dataaccess.connect_db(cfg["database"]["DSN"]).thing
 
 
 @pytest.fixture
 def credentials(request, session):
-    # credentials = {"email": "user@mail.com", "passwrod": "123456"}
+    credentials = {"email": "user@mail.com", "password": "123456"}
 
-    # def fin():
-    #     session.query(models.User).delete(
-    #         models.User.email == credentials["emdil"])
+    def fin():
+        session.query(models.User).filter(
+            models.User.email == credentials["email"]).delete()
+        session.commit()
 
-    # request.addfinalizer(fin)
-    # return credentials
-
-    pass
-
-
-# def test_create_user_seccess_example(client, credentials):
-#     resp = client.post(
-#         "/users",
-#         data=json.dumps(credentials),
-#         content_type="application/json")
-#     assert resp.status_code == 201
+    request.addfinalizer(fin)
+    return credentials
 
 
 def test_create_user_if_email_is_invalid(client):
@@ -89,33 +80,24 @@ def test_create_user_if_missing_email_password(client):
     assert resp.status_code == 400
 
 
-def test_create_user_exists(client):
+def test_create_user_seccess(client, credentials):
     resp = client.post(
         "/users",
-        data=json.dumps({
-            "email": "test_exists@mail.com",
-            "password": "123456"
-        }),
-        content_type="application/json")
-    resp = client.post(
-        "/users",
-        data=json.dumps({
-            "email": "test_exists@mail.com",
-            "password": "123456"
-        }),
-        content_type="application/json")
-    assert resp.status_code == 400
-
-
-def test_create_user_success(client):
-    resp = client.post(
-        "/users",
-        data=json.dumps({
-            "email": "test_success@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
+
+
+def test_create_user_exists(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json")
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json")
+    assert resp.status_code == 400
 
 
 def test_confirm_user_if_confirmation_not_exists(client):
@@ -123,13 +105,10 @@ def test_confirm_user_if_confirmation_not_exists(client):
     assert resp.status_code == 404
 
 
-def test_confirm_user_success(client):
+def test_confirm_user_success(client, credentials):
     resp = client.post(
         "/users",
-        data=json.dumps({
-            "email": "test_confirm@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
     conf_id = json.loads(resp.data)["confirmation"]["id"]
@@ -138,16 +117,14 @@ def test_confirm_user_success(client):
     assert json.loads(resp.data)["user"]["active"]
 
 
-def test_confirm_user_expired(client, faketime):
+def test_confirm_user_expired(client, faketime, credentials, cfg):
     resp = client.post(
         "/users",
-        data=json.dumps({
-            "email": "test_expired@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
-    faketime.current_utc = datetime.datetime(2018, 1, 1, 16, 1, 11)
+    delay = 2 * cfg["security"]["ttl"]
+    faketime.current_utc = datetime.datetime.utcnow() + delay
     conf_id = json.loads(resp.data)["confirmation"]["id"]
     resp = client.get("/actions/{0}".format(conf_id))
     assert resp.status_code == 404
@@ -212,32 +189,23 @@ def test_login_user_not_found(client):
     assert resp.status_code == 401
 
 
-def test_login_user_not_active(client):
+def test_login_user_not_active(client, credentials):
     resp = client.post(
         "/users",
-        data=json.dumps({
-            "email": "login@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/v1/tokens",
-        data=json.dumps({
-            "email": "login@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 400
 
 
-def test_login_password_dont_matched(client):
+def test_login_password_dont_matched(client, credentials):
     resp = client.post(
         "/users",
-        data=json.dumps({
-            "email": "login_password@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
     conf_id = json.loads(resp.data)["confirmation"]["id"]
@@ -247,20 +215,17 @@ def test_login_password_dont_matched(client):
     resp = client.post(
         "/v1/tokens",
         data=json.dumps({
-            "email": "login_password@mail.com",
+            "email": "user@mail.com",
             "password": "123456777"
         }),
         content_type="application/json")
     assert resp.status_code == 401
 
 
-def test_login_success(client):
+def test_login_success(client, credentials):
     resp = client.post(
         "/users",
-        data=json.dumps({
-            "email": "login_success@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
     conf_id = json.loads(resp.data)["confirmation"]["id"]
@@ -269,9 +234,6 @@ def test_login_success(client):
     assert json.loads(resp.data)["user"]["active"]
     resp = client.post(
         "/v1/tokens",
-        data=json.dumps({
-            "email": "login_success@mail.com",
-            "password": "123456"
-        }),
+        data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 200

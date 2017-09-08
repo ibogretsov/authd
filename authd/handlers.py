@@ -4,11 +4,9 @@ import datetime
 import bcrypt
 import flask
 import tokenlib
-import pytimeparse
 import voluptuous as schema
 
-from authd import dataaccess
-from authd import models
+from authd import dataaccess, managers
 
 root = flask.Blueprint("root", __name__, url_prefix="")
 
@@ -54,35 +52,26 @@ def create_user():
         user = models.User(
             email=data["email"], password=hash_password, created=now)
         session.add(user)
-        conf = models.Confirm(
-            user=user,
-            created=now,
-            # read timeout from config
-            expires=expires)
+        conf = models.Confirm(user=user, created=now, expires=expires)
         session.add(conf)
         session.commit()
-    return flask.jsonify({
-        "user": {
-            "id": user.user_id
+    token = tokenlib.make_token(
+        {
+            "user": {
+                "id": user.user_id
+            },
+            "confirmation": {
+                "id": conf.conf_id,
+                "created": conf.created.isoformat(" "),
+                "expires": conf.expires.isoformat(" ")
+            }
         },
-        "confirmation": {
-            "id": conf.conf_id,
-            "created": conf.created,
-            "expires": conf.expires
-        }
-    }), 201
+        secret=flask.current_app.config["security"]["key"])
+    return return_token(token), 201
 
 
 @root.route("/actions/<uuid:conf_id>", methods=["GET"])
 def confirm_user(conf_id):
-    # read confirmation-id from request
-    # find confirmation id database by id
-    # if confirmation not exists return 404
-    # if confirmation expired return 400
-    # find user from confirmation
-    # set user.active = True
-    # delete confirmation
-    # return HTTP 200
     with dataaccess.connect_db(
             flask.current_app.config["database"]["DSN"]) as session:
         existing = session.query(models.Confirm).filter(
@@ -90,9 +79,6 @@ def confirm_user(conf_id):
         if existing is None:
             abort("confirmation not exists", 404)
         if existing.expires < datetime.datetime.utcnow():
-            # delete confirmation
-            # create new conf
-            # return new conf_id
             session.query(models.Confirm).filter(
                 models.Confirm.conf_id == str(conf_id)).delete()
             now = datetime.datetime.utcnow()
@@ -108,7 +94,7 @@ def confirm_user(conf_id):
                         new_conf_id=conf.conf_id), 404))
         user_id = existing.user_id
         session.query(models.User).filter(
-            models.User.user_id == str(user_id)).update(
+            models.User.user_id == user_id).update(
                 {
                     models.User.active: True
                 }, synchronize_session=False)
@@ -143,11 +129,10 @@ def login():
         password = data["password"].encode("utf-8")
         if not bcrypt.checkpw(password, hash_password):
             abort("password doesn't matched", 401)
-        token = tokenlib.make_token(
-            {
-                "email": user.email,
-                "password": user.password
-            },
-            # read secret from config
-            secret=flask.current_app.config["security"]["key"])
-        return return_token(token), 200
+    token = tokenlib.make_token(
+        {
+            "email": user.email,
+            "password": user.password
+        },
+        secret=flask.current_app.config["security"]["key"])
+    return return_token(token), 200

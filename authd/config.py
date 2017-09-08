@@ -8,7 +8,6 @@ from voluptuous import All
 from voluptuous import CoerceInvalid
 from voluptuous import Required
 from voluptuous import Schema
-from voluptuous import MultipleInvalid
 
 
 class TimeSpan(object):

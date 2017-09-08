@@ -1,5 +1,3 @@
-import json
-
 import flask
 
 from authd import handlers
@@ -8,7 +6,6 @@ from authd import config
 
 def create_app(config_filename):
     app = flask.Flask(__name__)
-    # with open(config_filename, mode="r", encoding="utf-8") as cfg:
     app.config.update(config.load(config_filename))
     app.register_blueprint(handlers.root)
     return app

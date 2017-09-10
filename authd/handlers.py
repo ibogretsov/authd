@@ -1,6 +1,5 @@
 import json
 
-import bcrypt
 import flask
 import tokenlib
 
@@ -18,11 +17,6 @@ def abort(message, status_code, item=None):
             flask.jsonify(message=message, item=item), status_code))
 
 
-def return_token(token):
-    manager = tokenlib.TokenManager(secret="tokentoken")
-    return flask.jsonify(manager.parse_token(token))
-
-
 @root.route("/users", methods=["POST"])
 def create_user():
     data = json.loads(flask.request.data)
@@ -33,19 +27,16 @@ def create_user():
             data["email"], data["password"].encode("utf-8"))
     except managers.SecurityError as exc:
         abort(str(exc), 400)
-    token = tokenlib.make_token(
-        {
-            "user": {
-                "id": user.user_id
-            },
-            "confirmation": {
-                "id": confirmation.confirm_id,
-                "created": confirmation.created.isoformat(" "),
-                "expires": confirmation.expires.isoformat(" ")
-            }
+    return flask.jsonify({
+        "user": {
+            "id": user.user_id
         },
-        secret=flask.current_app.config["security"]["key"])
-    return return_token(token), 201
+        "confirmation": {
+            "id": confirmation.confirm_id,
+            "created": confirmation.created,
+            "expires": confirmation.expires
+        }
+    }), 201
 
 
 @root.route("/actions/<uuid:confirm_id>", methods=["GET"])
@@ -57,15 +48,7 @@ def confirm_user(confirm_id):
         abort(str(exc), 404)
     except managers.Expired as exc:
         abort(str(exc), 404, exc.confirm_id)
-    token = tokenlib.make_token(
-        {
-            "user": {
-                "id": user_id,
-                "active": True
-            }
-        },
-        secret=flask.current_app.config["security"]["key"])
-    return return_token(token), 200
+    return flask.jsonify({"user": {"id": user_id, "active": True}}), 200
 
 
 @root.route("/v1/tokens", methods=["POST"])
@@ -87,4 +70,4 @@ def login():
             "password": data["password"]
         },
         secret=flask.current_app.config["security"]["key"])
-    return return_token(token), 200
+    return token, 200

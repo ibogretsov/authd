@@ -21,17 +21,11 @@ class UserManager:
         if self.storage.users.find(email) is not None:
             raise SecurityError("This user already exists")
         user = models.User(
-            email=email,
-            password=password,
-            created=datetime.datetime.utcnow())
+            email=email, password=password, created=datetime.datetime.utcnow())
         self.storage.users.create(user)
         confirmation = self.action_manager.create(user)
         self.storage.commit()
         return user, confirmation
-
-    def update(self, user_id):
-        self.storage.users.update(user_id)
-        self.storage.commit()
 
     def confirm(self, conf_id):
         existing = self.action_manager.find(conf_id)
@@ -40,8 +34,9 @@ class UserManager:
         if existing.expires < datetime.datetime.utcnow():
             conf_id = self.action_manager.expired(existing)
             raise Expired("Confirmation expired", conf_id)
-        self.action_manager.delete(conf_id)
-        self.update(existing.user_id)
+        self.storage.actions.delete(existing.conf_id)
+        self.storage.users.update(existing.user_id, {models.User.active: True})
+        self.storage.commit()
         return existing.user_id
 
     def login(self, email, password):
@@ -71,16 +66,13 @@ class ActionManager:
         return self.storage.actions.find(conf_id)
 
     def expired(self, existing):
-        self.delete(existing.conf_id)
+        self.storage.actions.delete(existing.conf_id)
         now, expires = create_date_time(self.config)
         conf = models.Confirm(
             user_id=existing.user_id, created=now, expires=expires)
         self.storage.actions.create(conf)
         self.storage.commit()
         return conf.conf_id
-
-    def delete(self, conf_id):
-        self.storage.actions.delete(conf_id)
 
 
 class SecurityError(Exception):

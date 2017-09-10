@@ -27,12 +27,10 @@ class UserRepository:
                                   models.User.active).filter(
                                       models.User.email == email).first()
 
-    def update(self, user_id):
+    def update(self, user_id, data):
         self.session.query(models.User).filter(
             models.User.user_id == user_id).update(
-                {
-                    models.User.active: True
-                }, synchronize_session=False)
+                data, synchronize_session=False)
 
 
 class ActionRepository:

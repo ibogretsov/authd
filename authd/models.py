@@ -22,8 +22,8 @@ class User(Base):
 
 class Confirm(Base):
     __tablename__ = "confirmation"
-    conf_id = sa.Column(
-        "conf_id",
+    confirm_id = sa.Column(
+        "confirm_id",
         pg.UUID,
         server_default=sa.text("gen_random_uuid()"),
         primary_key=True)

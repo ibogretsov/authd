@@ -37,16 +37,16 @@ class ActionRepository:
     def __init__(self, session):
         self.session = session
 
-    def create(self, conf):
-        self.session.add(conf)
+    def create(self, confirmation):
+        self.session.add(confirmation)
 
-    def find(self, conf_id):
+    def find(self, confirm_id):
         return self.session.query(models.Confirm).filter(
-            models.Confirm.conf_id == str(conf_id)).first()
+            models.Confirm.confirm_id == str(confirm_id)).first()
 
-    def delete(self, conf_id):
+    def delete(self, confirm_id):
         self.session.query(models.Confirm).filter(
-            models.Confirm.conf_id == str(conf_id)).delete()
+            models.Confirm.confirm_id == str(confirm_id)).delete()
 
 
 class Storage:

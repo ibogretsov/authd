@@ -1,8 +1,8 @@
-"""initial schema
+"""initial_schema
 
-Revision ID: 63197a21ce38
+Revision ID: 0a08b8dbed80
 Revises: 
-Create Date: 2017-09-04 19:49:27.381711
+Create Date: 2017-09-10 14:49:23.805119
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '63197a21ce38'
+revision = '0a08b8dbed80'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,7 +34,7 @@ def upgrade():
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_table('confirmation',
                     sa.Column(
-                        'conf_id',
+                        'confirm_id',
                         postgresql.UUID(),
                         server_default=sa.text('gen_random_uuid()'),
                         nullable=False),
@@ -43,7 +43,7 @@ def upgrade():
                     sa.Column('expires', sa.DateTime(), nullable=False),
                     sa.ForeignKeyConstraint(
                         ['user_id'], ['users.user_id'], ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('conf_id'))
+                    sa.PrimaryKeyConstraint('confirm_id'))
     # ### end Alembic commands ###
 
 

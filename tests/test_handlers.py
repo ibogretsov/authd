@@ -101,7 +101,7 @@ def test_create_user_exists(client, credentials):
 
 
 def test_confirm_user_if_confirmation_not_exists(client):
-    resp = client.get("/actions/invalid_conf_id")
+    resp = client.get("/actions/invalid_confirm_id")
     assert resp.status_code == 404
 
 
@@ -111,8 +111,8 @@ def test_confirm_user_success(client, credentials):
         data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
-    conf_id = json.loads(resp.data)["confirmation"]["id"]
-    resp = client.get("/actions/{0}".format(conf_id))
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.get("/actions/{0}".format(confirm_id))
     assert resp.status_code == 200
     assert json.loads(resp.data)["user"]["active"]
 
@@ -125,8 +125,8 @@ def test_confirm_user_expired(client, faketime, credentials, cfg):
     assert resp.status_code == 201
     delay = 2 * cfg["security"]["ttl"]
     faketime.current_utc = datetime.datetime.utcnow() + delay
-    conf_id = json.loads(resp.data)["confirmation"]["id"]
-    resp = client.get("/actions/{0}".format(conf_id))
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.get("/actions/{0}".format(confirm_id))
     assert resp.status_code == 404
 
 
@@ -208,8 +208,8 @@ def test_login_password_dont_matched(client, credentials):
         data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
-    conf_id = json.loads(resp.data)["confirmation"]["id"]
-    resp = client.get("/actions/{0}".format(conf_id))
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.get("/actions/{0}".format(confirm_id))
     assert resp.status_code == 200
     assert json.loads(resp.data)["user"]["active"]
     resp = client.post(
@@ -228,8 +228,8 @@ def test_login_success(client, credentials):
         data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 201
-    conf_id = json.loads(resp.data)["confirmation"]["id"]
-    resp = client.get("/actions/{0}".format(conf_id))
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.get("/actions/{0}".format(confirm_id))
     assert resp.status_code == 200
     assert json.loads(resp.data)["user"]["active"]
     resp = client.post(

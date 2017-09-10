@@ -16,7 +16,7 @@ def cfg():
 
 @pytest.fixture
 def session(request, cfg):
-    return dataaccess.connect_db(cfg["database"]["DSN"]).thing
+    return dataaccess.connect_db(cfg["database"]["DSN"]).session
 
 
 @pytest.fixture

@@ -1,5 +1,3 @@
-import contextlib
-
 import lazy
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -10,8 +8,7 @@ def connect_db(dsn):
     engine = sa.create_engine(dsn)
     session = orm.scoped_session(
         orm.sessionmaker(bind=engine, expire_on_commit=False))
-    # read about with operator!!!
-    return contextlib.closing(Storage(session))
+    return Storage(session)
 
 
 class UserRepository:
@@ -38,7 +35,7 @@ class UserRepository:
                 }, synchronize_session=False)
 
 
-class ActionsRepository:
+class ActionRepository:
     def __init__(self, session):
         self.session = session
 
@@ -70,4 +67,4 @@ class Storage:
 
     @lazy.lazy
     def actions(self):
-        return ActionsRepository(self.session)
+        return ActionRepository(self.session)

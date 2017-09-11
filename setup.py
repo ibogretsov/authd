@@ -5,28 +5,27 @@ import os
 
 import sqlalchemy
 import sqlalchemy_utils
-import psycopg2
 
 
 def crt_engine(user, password):
     """create engine"""
     if user is not None and password is not None:
         engine = sqlalchemy.create_engine(
-            "postgresql+psycopg2://{0}:{1}@localhost:5432/database".
+            "postgresql+psycopg2://{0}:{1}@localhost:5432/authdb".
             format(user, password))
     elif user is not None:
         engine = sqlalchemy.create_engine(
-            "postgresql+psycopg2://{0}@localhost:5432/database".
+            "postgresql+psycopg2://{0}@localhost:5432/authdb".
             format(user))
     else:
         engine = sqlalchemy.create_engine(
-            "postgresql+psycopg2://localhost:5432/database")
+            "postgresql+psycopg2://localhost:5432/authdb")
     return engine
 
 
 class DatabaseCommand(distutils.cmd.Command):
     """A custom command to run Database on all Python source files."""
-    description = "set user, password for Database in authd"
+    description = "set user, password for authdb in authd"
     user_options = [("database-user=", None, "Database superuser"),
                     ("database-password=", None, "superuser's password")]
 
@@ -87,4 +86,6 @@ setuptools.setup(
     author_email="ilyabogrecov@gmail.com",
     url="https://gitlab.com/ilyabogrecov/authd",
     keywords=["authentication", "users"],
+    install_requires=["sqlalchemy", "psycopg2",
+                      "sqlalchemy_utils", "flask", "alembic"]
 )

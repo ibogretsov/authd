@@ -12,6 +12,13 @@ USER_SCHEMA = schema.Schema({
     schema.All(str, schema.Length(min=6))
 })
 
+PASSWORD = schema.Schema({
+    schema.Required("password"):
+    schema.All(str, schema.Length(min=6))
+})
+
+EMAIL = schema.Schema({schema.Required("email"): schema.Email()})
+
 
 def create_date_time(config):
     now = datetime.datetime.utcnow()
@@ -24,6 +31,20 @@ def email_password_correct(data, abort):
         USER_SCHEMA(data)
     except schema.MultipleInvalid as e:
         abort(str(e), 400)
+
+
+def password_correct(password, abort):
+    try:
+        PASSWORD(password)
+    except schema.MultipleInvalid as exc:
+        abort(str(exc), 400)
+
+
+def email_correct(email, abort):
+    try:
+        EMAIL(email)
+    except schema.MultipleInvalid as exc:
+        abort(str(exc), 400)
 
 
 class UserManager:
@@ -68,6 +89,28 @@ class UserManager:
         data_pass = password.encode("utf-8")
         if not bcrypt.checkpw(data_pass, hash_pass):
             raise SecurityError("Password doesn't match")
+
+    def request_password_reset(self, email):
+        user = self.storage.users.find_user(email)
+        if user is None:
+            raise NotFound("User isn't found")
+        confirmation = self.action_manager.create(user)
+        self.storage.commit()
+        return confirmation
+
+    def reset_password(self, confirm_id, password):
+        existing = self.action_managert.find(confirm_id)
+        if existing is None:
+            raise NotFound("Confirmation not exists")
+        if existing.expires < datetime.datetime.utcnow():
+            confirm_id = self.action_manager.expired(existing)
+            raise Expired("Confirmation expired", confirm_id)
+        self.storage.actions.delete(existing.confirm_id)
+        hash_password = bcrypt.hashpw(password,
+                                      bcrypt.gensalt()).decode("utf-8")
+        self.storage.users.update(existing.user_id,
+                                  {models.User.password: hash_password})
+        self.storage.commit()
 
 
 class ActionManager:

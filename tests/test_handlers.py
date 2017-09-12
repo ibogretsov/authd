@@ -88,7 +88,7 @@ def test_create_user_seccess(client, credentials):
     assert resp.status_code == 201
 
 
-def test_create_user_exists(client, credentials):
+def test_create_user_if_user_exists(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
@@ -117,7 +117,8 @@ def test_confirm_user_success(client, credentials):
     assert json.loads(resp.data)["user"]["active"]
 
 
-def test_confirm_user_expired(client, faketime, credentials, cfg):
+def test_confirm_user_if_confirm_id_expired(client, faketime, credentials,
+                                            cfg):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
@@ -178,7 +179,7 @@ def test_login_if_missing_email_password(client):
     assert resp.status_code == 400
 
 
-def test_login_user_not_found(client):
+def test_login_user_if_user_not_found(client):
     resp = client.post(
         "/v1/tokens",
         data=json.dumps({
@@ -189,7 +190,7 @@ def test_login_user_not_found(client):
     assert resp.status_code == 401
 
 
-def test_login_user_not_active(client, credentials):
+def test_login_user_if_user_not_active(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
@@ -202,7 +203,7 @@ def test_login_user_not_active(client, credentials):
     assert resp.status_code == 400
 
 
-def test_login_password_dont_matched(client, credentials):
+def test_login_password_if_password_dont_matched(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
@@ -371,7 +372,7 @@ def test_reset_password_if_confirm_id_expired(client, faketime, credentials,
     resp = client.post(
         "/actions/reset_password/{0}".format(confirm_id),
         data=json.dumps({
-            "password": "1"
+            "password": "678900"
         }),
         content_type="application/json")
     assert resp.status_code == 404
@@ -394,7 +395,7 @@ def test_reset_password_success(client, credentials):
     resp = client.post(
         "/actions/reset_password/{0}".format(confirm_id),
         data=json.dumps({
-            "password": "1"
+            "password": "999999"
         }),
         content_type="application/json")
     assert resp.status_code == 200

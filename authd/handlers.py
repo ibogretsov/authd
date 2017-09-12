@@ -8,13 +8,9 @@ from authd import controller, managers
 root = flask.Blueprint("root", __name__, url_prefix="")
 
 
-def abort(message, status_code, item=None):
-    if item is None:
-        flask.abort(
-            flask.make_response(flask.jsonify(message=message), status_code))
+def abort(message, status_code):
     flask.abort(
-        flask.make_response(
-            flask.jsonify(message=message, item=item), status_code))
+        flask.make_response(flask.jsonify(message=message), status_code))
 
 
 @root.route("/users", methods=["POST"])
@@ -47,7 +43,7 @@ def confirm_user(confirm_id):
     except managers.NotFound as exc:
         abort(str(exc), 404)
     except managers.Expired as exc:
-        abort(str(exc), 404, exc.confirm_id)
+        abort(str(exc), 404)
     return flask.jsonify({"user": {"id": user_id, "active": True}}), 200
 
 
@@ -57,7 +53,7 @@ def login():
     managers.email_password_correct(data, abort)
     control = controller.Controller(flask.current_app.config)
     try:
-        control.login(data["email"], data["password"])
+        email, password = control.login(data["email"], data["password"])
     except managers.NotFound as exc:
         abort(str(exc), 401)
     except managers.NotActive as exc:
@@ -66,8 +62,8 @@ def login():
         abort(str(exc), 401)
     token = tokenlib.make_token(
         {
-            "email": data["email"],
-            "password": data["password"]
+            "email": email,
+            "password": password
         },
         secret=flask.current_app.config["security"]["key"])
     return token, 200
@@ -83,9 +79,11 @@ def request_password_reset():
     except managers.NotFound as exc:
         abort(str(exc), 404)
     return flask.jsonify({
+        "user": {
+            "id": confirmation.user_id
+        },
         "confirmation": {
             "id": confirmation.confirm_id,
-            "user_id": confirmation.user_id,
             "created": confirmation.created,
             "expires": confirmation.expires
         }
@@ -98,9 +96,9 @@ def reset_password(confirm_id):
     managers.password_correct(data, abort)
     control = controller.Controller(flask.current_app.config)
     try:
-        control.reset_password(confirm_id, data["password"])
+        control.reset_password(confirm_id, data["password"].encode("utf-8"))
     except managers.NotFound as exc:
         abort(str(exc), 404)
     except managers.Expired as exc:
-        abort(str(exc), 404, exc.confirm_id)
-    return 200
+        abort(str(exc), 404)
+    return flask.jsonify({"message": "password changed successfully"}), 200

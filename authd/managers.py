@@ -73,7 +73,8 @@ class UserManager:
             raise NotFound("Confirmation not exists")
         if existing.expires < datetime.datetime.utcnow():
             confirm_id = self.action_manager.expired(existing)
-            raise Expired("Confirmation expired", confirm_id)
+            raise Expired(
+                "Confirmation expired, new confirm_id: {0}".format(confirm_id))
         self.storage.actions.delete(existing.confirm_id)
         self.storage.users.update(existing.user_id, {models.User.active: True})
         self.storage.commit()
@@ -89,24 +90,24 @@ class UserManager:
         data_pass = password.encode("utf-8")
         if not bcrypt.checkpw(data_pass, hash_pass):
             raise SecurityError("Password doesn't match")
+        return user.email, user.password
 
     def request_password_reset(self, email):
         user = self.storage.users.find_user(email)
         if user is None:
             raise NotFound("User isn't found")
-        # import pdb
-        # pdb.set_trace()
         confirmation = self.action_manager.create(user)
         self.storage.commit()
         return confirmation
 
     def reset_password(self, confirm_id, password):
-        existing = self.action_managert.find(confirm_id)
+        existing = self.action_manager.find(confirm_id)
         if existing is None:
             raise NotFound("Confirmation not exists")
         if existing.expires < datetime.datetime.utcnow():
             confirm_id = self.action_manager.expired(existing)
-            raise Expired("Confirmation expired", confirm_id)
+            raise Expired(
+                "Confirmation expired, new confirm_id: {0}".format(confirm_id))
         self.storage.actions.delete(existing.confirm_id)
         hash_password = bcrypt.hashpw(password,
                                       bcrypt.gensalt()).decode("utf-8")
@@ -144,9 +145,7 @@ class SecurityError(Exception):
 
 
 class Expired(SecurityError):
-    def __init__(self, confirm_id, message):
-        super(Expired, self).__init__(confirm_id, message)
-        self.confirm_id = confirm_id
+    pass
 
 
 class NotFound(SecurityError):

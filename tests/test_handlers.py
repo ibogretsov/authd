@@ -237,3 +237,164 @@ def test_login_success(client, credentials):
         data=json.dumps(credentials),
         content_type="application/json")
     assert resp.status_code == 200
+
+
+def test_request_pass_res_if_email_invalid(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "usermail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 400
+
+
+def test_request_pass_res_if_email_missing(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({}),
+        content_type="application/json")
+    assert resp.status_code == 400
+
+
+def test_request_pass_res_if_user_isnot_found(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json-")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "notfound@mail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 404
+
+
+def test_request_pass_res_success(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json-")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "user@mail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 201
+
+
+def test_reset_password_if_confirm_id_not_exists(client, credentials):
+    resp = client.post(
+        "/actions/reset_password/invalid_confirm_id",
+        data=json.dumps({
+            "password": "678900"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 404
+
+
+def test_reset_password_if_password_invalid(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json-")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "user@mail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 201
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.post(
+        "/actions/reset_password/{0}".format(confirm_id),
+        data=json.dumps({
+            "password": "1"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 400
+
+
+def test_reset_password_if_password_missing(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json-")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "user@mail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 201
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.post(
+        "/actions/reset_password/{0}".format(confirm_id),
+        data=json.dumps({}),
+        content_type="application/json")
+    assert resp.status_code == 400
+
+
+def test_reset_password_if_confirm_id_expired(client, faketime, credentials,
+                                              cfg):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json-")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "user@mail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 201
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    delay = 2 * cfg["security"]["ttl"]
+    faketime.current_utc = datetime.datetime.utcnow() + delay
+    resp = client.post(
+        "/actions/reset_password/{0}".format(confirm_id),
+        data=json.dumps({
+            "password": "1"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 404
+
+
+def test_reset_password_success(client, credentials):
+    resp = client.post(
+        "/users",
+        data=json.dumps(credentials),
+        content_type="application/json-")
+    assert resp.status_code == 201
+    resp = client.post(
+        "/actions/request_pass_res",
+        data=json.dumps({
+            "email": "user@mail.com"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 201
+    confirm_id = json.loads(resp.data)["confirmation"]["id"]
+    resp = client.post(
+        "/actions/reset_password/{0}".format(confirm_id),
+        data=json.dumps({
+            "password": "1"
+        }),
+        content_type="application/json")
+    assert resp.status_code == 200

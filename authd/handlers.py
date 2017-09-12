@@ -71,3 +71,36 @@ def login():
         },
         secret=flask.current_app.config["security"]["key"])
     return token, 200
+
+
+@root.route("/actions/request_pass_res", methods=["POST"])
+def request_password_reset():
+    data = json.loads(flask.request.data)
+    # managers.email_correct(data["email"], abort)
+    control = controller.Controller(flask.current_app.config)
+    try:
+        confirmation = control.request_password_reset(data["email"])
+    except managers.NotFound as exc:
+        abort(str(exc), 404)
+    return flask.jsonify({
+        "confirmation": {
+            "id": confirmation.confirm_id,
+            "user_id": confirmation.user_id,
+            "created": confirmation.created,
+            "expires": confirmation.expires
+        }
+    }), 201
+
+
+@root.route("/actions/reset_password/<uuid:confirm_id>", methods=["POST"])
+def reset_password(confirm_id):
+    data = json.loads(flask.request.data)
+    managers.password_correct(data["password"], abort)
+    control = controller.Controller(flask.current_app.config)
+    try:
+        control.reset_password(confirm_id, data["password"])
+    except managers.NotFound as exc:
+        abort(str(exc), 404)
+    except managers.Expired as exc:
+        abort(str(exc), 404, exc.confirm_id)
+    return 200

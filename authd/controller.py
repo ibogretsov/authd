@@ -49,3 +49,12 @@ class Controller:
         with Container(self.config) as container:
             container.user_manager.login(email, password)
         return email, password
+
+    def request_password_reset(self, email):
+        with Container(self.config) as container:
+            confirmation = container.user_manager.request_password_reset(email)
+        return confirmation
+
+    def reset_password(self, confirm_id, password):
+        with Container(self.config) as container:
+            container.user_manager.reset_password(confirm_id, password)

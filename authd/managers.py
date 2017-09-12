@@ -94,6 +94,8 @@ class UserManager:
         user = self.storage.users.find_user(email)
         if user is None:
             raise NotFound("User isn't found")
+        # import pdb
+        # pdb.set_trace()
         confirmation = self.action_manager.create(user)
         self.storage.commit()
         return confirmation

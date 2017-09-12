@@ -76,7 +76,7 @@ def login():
 @root.route("/actions/request_pass_res", methods=["POST"])
 def request_password_reset():
     data = json.loads(flask.request.data)
-    # managers.email_correct(data["email"], abort)
+    managers.email_correct(data, abort)
     control = controller.Controller(flask.current_app.config)
     try:
         confirmation = control.request_password_reset(data["email"])
@@ -95,7 +95,7 @@ def request_password_reset():
 @root.route("/actions/reset_password/<uuid:confirm_id>", methods=["POST"])
 def reset_password(confirm_id):
     data = json.loads(flask.request.data)
-    managers.password_correct(data["password"], abort)
+    managers.password_correct(data, abort)
     control = controller.Controller(flask.current_app.config)
     try:
         control.reset_password(confirm_id, data["password"])

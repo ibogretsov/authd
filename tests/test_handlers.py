@@ -271,7 +271,7 @@ def test_request_pass_res_if_user_isnot_found(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
-        content_type="application/json-")
+        content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/actions/request_pass_res",
@@ -286,7 +286,7 @@ def test_request_pass_res_success(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
-        content_type="application/json-")
+        content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/actions/request_pass_res",
@@ -311,7 +311,7 @@ def test_reset_password_if_password_invalid(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
-        content_type="application/json-")
+        content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/actions/request_pass_res",
@@ -334,7 +334,7 @@ def test_reset_password_if_password_missing(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
-        content_type="application/json-")
+        content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/actions/request_pass_res",
@@ -356,7 +356,7 @@ def test_reset_password_if_confirm_id_expired(client, faketime, credentials,
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
-        content_type="application/json-")
+        content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/actions/request_pass_res",
@@ -381,7 +381,7 @@ def test_reset_password_success(client, credentials):
     resp = client.post(
         "/users",
         data=json.dumps(credentials),
-        content_type="application/json-")
+        content_type="application/json")
     assert resp.status_code == 201
     resp = client.post(
         "/actions/request_pass_res",

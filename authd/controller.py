@@ -41,8 +41,8 @@ class Controller:
 
     def login(self, email, password):
         with Container(self.config) as container:
-            email, password = container.user_manager.login(email, password)
-        return email, password
+            user_id = container.user_manager.login(email, password)
+        return user_id
 
     def request_password_reset(self, email):
         with Container(self.config) as container:

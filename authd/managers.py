@@ -26,25 +26,25 @@ def create_date_time(config):
     return now, expires
 
 
-def email_password_correct(data, abort):
+def email_password_correct(data):
     try:
         USER_SCHEMA(data)
-    except schema.MultipleInvalid as e:
-        abort(str(e), 400)
+    except schema.MultipleInvalid as exc:
+        raise Incorrect(str(exc))
 
 
-def password_correct(password, abort):
+def password_correct(password):
     try:
         PASSWORD(password)
     except schema.MultipleInvalid as exc:
-        abort(str(exc), 400)
+        raise Incorrect(str(exc))
 
 
-def email_correct(email, abort):
+def email_correct(email):
     try:
         EMAIL(email)
     except schema.MultipleInvalid as exc:
-        abort(str(exc), 400)
+        raise Incorrect(str(exc))
 
 
 class UserManager:
@@ -90,7 +90,7 @@ class UserManager:
         data_pass = password.encode("utf-8")
         if not bcrypt.checkpw(data_pass, hash_pass):
             raise SecurityError("Password doesn't match")
-        return user.email, user.password
+        return user.user_id
 
     def request_password_reset(self, email):
         user = self.storage.users.find_user(email)
@@ -141,6 +141,10 @@ class ActionManager:
 
 
 class SecurityError(Exception):
+    pass
+
+
+class Incorrect(Exception):
     pass
 
 

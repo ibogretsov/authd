@@ -16,7 +16,10 @@ def abort(message, status_code):
 @root.route("/users", methods=["POST"])
 def create_user():
     data = json.loads(flask.request.data)
-    managers.email_password_correct(data, abort)
+    try:
+        managers.email_password_correct(data)
+    except managers.Incorrect as exc:
+        abort(str(exc), 400)
     control = controller.Controller(flask.current_app.config)
     try:
         user, confirmation = control.create_user(
@@ -43,17 +46,20 @@ def confirm_user(confirm_id):
     except managers.NotFound as exc:
         abort(str(exc), 404)
     except managers.Expired as exc:
-        abort(str(exc), 404)
+        abort(str(exc), 400)
     return flask.jsonify({"user": {"id": user_id, "active": True}}), 200
 
 
-@root.route("/v1/tokens", methods=["POST"])
+@root.route("/token", methods=["POST"])
 def login():
     data = json.loads(flask.request.data)
-    managers.email_password_correct(data, abort)
+    try:
+        managers.email_password_correct(data)
+    except managers.Incorrect as exc:
+        abort(str(exc), 400)
     control = controller.Controller(flask.current_app.config)
     try:
-        email, password = control.login(data["email"], data["password"])
+        user_id = control.login(data["email"], data["password"])
     except managers.NotFound as exc:
         abort(str(exc), 401)
     except managers.NotActive as exc:
@@ -62,17 +68,19 @@ def login():
         abort(str(exc), 401)
     token = tokenlib.make_token(
         {
-            "email": email,
-            "password": password
+            "user_id": user_id
         },
         secret=flask.current_app.config["security"]["key"])
-    return token, 200
+    return flask.jsonify({"token": token}), 200
 
 
 @root.route("/actions/request_pass_res", methods=["POST"])
 def request_password_reset():
     data = json.loads(flask.request.data)
-    managers.email_correct(data, abort)
+    try:
+        managers.email_correct(data)
+    except managers.Incorrect as exc:
+        abort(str(exc), 400)
     control = controller.Controller(flask.current_app.config)
     try:
         confirmation = control.request_password_reset(data["email"])
@@ -93,12 +101,31 @@ def request_password_reset():
 @root.route("/actions/reset_password/<uuid:confirm_id>", methods=["POST"])
 def reset_password(confirm_id):
     data = json.loads(flask.request.data)
-    managers.password_correct(data, abort)
+    try:
+        managers.password_correct(data)
+    except managers.Incorrect as exc:
+        abort(str(exc), 400)
     control = controller.Controller(flask.current_app.config)
     try:
         control.reset_password(confirm_id, data["password"].encode("utf-8"))
     except managers.NotFound as exc:
         abort(str(exc), 404)
     except managers.Expired as exc:
-        abort(str(exc), 404)
+        abort(str(exc), 400)
     return flask.jsonify({"message": "password changed successfully"}), 200
+
+
+@root.route("/token", methods=["GET"])
+def return_token():
+    token = flask.request.headers.get("Authorization")
+    try:
+        user_id = tokenlib.parse_token(
+            token,
+            secret=flask.current_app.config["security"]["key"])["user_id"]
+    except tokenlib.errors.ExpiredTokenError as exc:
+        abort("Token expired", 400)
+    except tokenlib.errors.InvalidSignatureError as exc:
+        abort("Invalid token", 401)
+    except tokenlib.errors.MalformedTokenError as exc:
+        abort("Invalid token, len", 401)
+    return flask.jsonify({"user_id": user_id}), 200

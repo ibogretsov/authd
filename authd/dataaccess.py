@@ -23,9 +23,8 @@ class UserRepository:
             models.User.email == email).first()
 
     def find_user(self, email):
-        return self.session.query(models.User.email, models.User.password,
-                                  models.User.active).filter(
-                                      models.User.email == email).first()
+        return self.session.query(models.User).filter(
+            models.User.email == email).first()
 
     def update(self, user_id, data):
         self.session.query(models.User).filter(

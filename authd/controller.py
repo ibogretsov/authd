@@ -1,6 +1,5 @@
 import lazy
 
-
 from authd import dataaccess, managers
 
 
@@ -18,16 +17,12 @@ class Container:
 
     @lazy.lazy
     def user_manager(self):
-        return managers.UserManager(
-            self.config,
-            self.storage,
-            self.action_manager)
+        return managers.UserManager(self.config, self.storage,
+                                    self.action_manager)
 
     @lazy.lazy
     def action_manager(self):
-        return managers.ActionManager(
-            self.config,
-            self.storage)
+        return managers.ActionManager(self.config, self.storage)
 
 
 class Controller:
@@ -36,8 +31,7 @@ class Controller:
 
     def create_user(self, email, password):
         with Container(self.config) as container:
-            user, confirmation = container.user_manager.create(
-                email, password)
+            user, confirmation = container.user_manager.create(email, password)
         return user, confirmation
 
     def confirm_user(self, confirm_id):
@@ -47,8 +41,8 @@ class Controller:
 
     def login(self, email, password):
         with Container(self.config) as container:
-            container.user_manager.login(email, password)
-        return email, password
+            user_id = container.user_manager.login(email, password)
+        return user_id
 
     def request_password_reset(self, email):
         with Container(self.config) as container:

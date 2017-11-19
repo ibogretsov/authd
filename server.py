@@ -1,3 +1,6 @@
+import logging.config
+
+
 import flask
 
 from authd import handlers
@@ -13,4 +16,5 @@ def create_app(config_filename):
 
 if __name__ == "__main__":
     app = create_app("etc/authdb.json")
+    logging.config.dictConfig(app.config["logger"])
     app.run()

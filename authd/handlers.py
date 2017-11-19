@@ -1,4 +1,5 @@
 import json
+import logging
 
 import flask
 import tokenlib
@@ -6,11 +7,18 @@ import tokenlib
 from authd import controller, managers
 
 root = flask.Blueprint("root", __name__, url_prefix="")
+LOG = logging.getLogger(__name__)
 
 
 def abort(message, status_code):
     flask.abort(
         flask.make_response(flask.jsonify(message=message), status_code))
+
+
+@root.errorhandler(500)
+def internal_server_error(exc):
+    LOG.error(exc, exc_info=True)
+    return flask.render_template("500.html"), 500
 
 
 @root.route("/users", methods=["POST"])
@@ -127,5 +135,5 @@ def return_token():
     except tokenlib.errors.InvalidSignatureError as exc:
         abort("Invalid token", 401)
     except tokenlib.errors.MalformedTokenError as exc:
-        abort("Invalid token, len", 401)
+        abort("Invalid token", 401)
     return flask.jsonify({"user_id": user_id}), 200

@@ -39,7 +39,8 @@ CONFIG = Schema({
     All(Schema({
         Required("ttl"): All(TimeSpan()),
         Required("key"): All(str)
-    }))
+    })),
+    Required("logger"): dict,
 })
 
 
